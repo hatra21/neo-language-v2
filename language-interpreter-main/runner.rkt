@@ -46,7 +46,21 @@
        )
       )
     )
-    
+
+;add name value pairs to the local scope
+(define extend_local_scope
+  (lambda (env list-of-varname list-of-value)
+    (cond
+      ((null? env) #false)
+      ;check the first scope to see if it's local
+      ((equal? (caar env) 'global) (push_scope_to_env list-of-varname list-of-value env))
+      ;use extend_scope function to add new vars into the local scope
+      (else (cons (extend-scope list-of-varname list-of-value (car env))
+                  (pop_env_to_global_scope env)))
+      )
+    )
+  )
+     
 
 ;environment is a list of scopes
 ;global variable scope (global (a 1) (b 2) (c 5))
@@ -139,13 +153,38 @@
 
 (define run-let-exp
   (lambda (parsed-code env)
-    (let* ((list-of-names (getVarnames (elementAt parsed-code 1)))
-          (list-of-values (getValues (elementAt parsed-code 1)))
-          (new_env (extend-scope list-of-names list-of-values env))
+    (let* ((resolved-var-list
+            (map (lambda (pair)
+                   (list (car pair) (run-neo-parsed-code (cadr pair) env)))
+                 (elementAt parsed-code 1)))
+        (list-of-names (getVarnames (elementAt parsed-code 1)))
+          (list-of-values (getValues resolved-var-list))
+          (new_env (extend_local_scope env list-of-names list-of-values))
+          ;new vars will be added to the local scope
           (body (elementAt parsed-code 2)))
     (run-neo-parsed-code body new_env)
     )
   )
   )
+
+;cascade-update-env should use run-neo-parsed-code to resolve the value from expressions every time using new environment
+(define cascade-update-env
+  (lambda (parsed-scope env)
+    (if (null? parsed-scope) env
+        (let* (
+               (original-local-scope (if (equal? (car (car env)) 'global) '() (car env)))
+               (varname (caar parsed-scope))
+               (var_value (run-neo-parsed-code (cadr (car parsed-scope)) env))
+               (pop_off_env (pop_env_to_global_scope env))
+               (new_env (list (cons (list varname var_value) original-local-scope)
+                            (pop_off_env)))
+             )
+          (cascade-update-env (cdr parsed-scope) new_env)
+          )
+      )
+    )
+  )
+
+
 
 (provide (all-defined-out))

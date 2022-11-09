@@ -64,13 +64,9 @@
 
 ;(local-vars ((a 1) (b 2) (c 3)) (neo-exp)) = neo-code
 ;(let-exp ((a 1) (b 2) (c 3)) (parsed-neo-exp))
-;((let-exp ((a (num-exp  1)) (b (num-exp 2)) (c (var-exp 3))) (parsed-neo-code))
 (define neo-let-code-parser
   (lambda (neo-code)
-    (list 'let-exp
-          (map (lambda (pair) (list (car pair) (neo-parser (elementAt pair 1))))
-               (elementAt neo-code 1))
-          (neo-parser (elementAt neo-code 2)))
+    (list 'let-exp (elementAt neo-code 1) (neo-parser (elementAt neo-code 2)))
     )
   )
 
