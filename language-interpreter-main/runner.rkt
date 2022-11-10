@@ -103,6 +103,8 @@
       ;(app-exp (func-exp (params (x)) (body-exp (let-exp ((a 1) (b 2) (c 3)) (math-exp + (var-exp a) (var-exp b))))) ((num-exp 5)))
       ((equal? (car parsed-code) 'let-exp)
        (run-let-exp parsed-code env))
+      ;(print-exp (var-exp a)) -> output: **screen** 1
+      ((equal? (car parsed-code) 'print-exp) (run-print-exp (cadr parsed-code) env))
       (else (run-neo-parsed-code
              (cadr parsed-code) ;function expression
              (push_scope_to_env (cadr (cadr (cadr parsed-code)))
@@ -160,6 +162,12 @@
       (run-neo-parsed-code body new_env)
     )
   )
+  )
+
+(define run-print-exp
+  (lambda (parsed-code env)
+    (display (string-append "**screen**" (number->string (run-neo-parsed-code parsed-code env))))
+    )
   )
 
 ;cascade-update-env should use run-neo-parsed-code to resolve the value from expressions every time using new environment

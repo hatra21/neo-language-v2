@@ -7,7 +7,9 @@
 ;;(define scope '((a 1) (b 2) (c 5)))
 (define env '((global (a 1) (b 2) (c 5))))
 
-(define sample-code '(local-vars ((a 7) (b a) (x b)) (math + x a)))
+;(define sample-code '(local-vars ((a 7) (b a) (x b)) (math + x a)))
+(define sample-code '(print a))
+
 (displayln (neo-parser sample-code))
 (define parsed-neo-code (neo-parser sample-code))
 

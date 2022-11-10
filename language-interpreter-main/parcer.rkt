@@ -17,6 +17,8 @@
       ;(app-exp (func-exp (params (identifier1, identifier2, identifer3 ...)) (body-exp)) ((neo-exp1 neo-exp2 neo-exp3 ...))
       ((equal? (car neo-code) 'call) (neo-call-code-parser neo-code))
       ((equal? (car neo-code) 'local-vars) (neo-let-code-parser neo-code))
+      ;(print a) -> (print-exp (var-exp a))
+      ((equal? (car neo-code) 'print) (list 'print-exp (neo-parser (cadr neo-code))))
       (else (map neo-parser neo-code)) ;((neo-parser 1) (neo-parser 'a) (neo-parser (math + 1 2)))
       )
     )
