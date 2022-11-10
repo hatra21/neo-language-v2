@@ -15,6 +15,10 @@
 ;(define parsed-neo-code (neo-parser '(call (function(x) (local-vars ((a 3) (b 7) (c 3)) (math + a b))) (5))))
 
 ;(define parsed-neo-code (neo-parser '(call (function(x) (math + x a)) (5))))
-(define parsed-code (neo-parser '(call (function (a) (call (function (r) a ) (a))) (5))))
 
-(run-neo-parsed-code parsed-code env)
+(define sample-code '(local-vars ((a 7) (b a) (x b)) (math + x a)))
+(displayln (neo-parser sample-code))
+(define parsed-neo-code (neo-parser sample-code))
+;(define parsed-code (neo-parser '(call (function (a) (call (function (r) a ) (a))) (5))))
+
+(run-neo-parsed-code parsed-neo-code env)
