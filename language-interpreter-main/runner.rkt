@@ -153,16 +153,11 @@
 
 (define run-let-exp
   (lambda (parsed-code env)
-    (let* ((resolved-var-list
-            (map (lambda (pair)
-                   (list (car pair) (run-neo-parsed-code (cadr pair) env)))
-                 (elementAt parsed-code 1)))
-        (list-of-names (getVarnames (elementAt parsed-code 1)))
-          (list-of-values (getValues resolved-var-list))
-          (new_env (extend_local_scope env list-of-names list-of-values))
+    (let* ((new_env
+            (cascade-update-env (elementAt parsed-code 1) env))
           ;new vars will be added to the local scope
           (body (elementAt parsed-code 2)))
-    (run-neo-parsed-code body new_env)
+      (run-neo-parsed-code body new_env)
     )
   )
   )
@@ -172,12 +167,22 @@
   (lambda (parsed-scope env)
     (if (null? parsed-scope) env
         (let* (
-               (original-local-scope (if (equal? (car (car env)) 'global) '() (car env)))
-               (varname (caar parsed-scope))
-               (var_value (run-neo-parsed-code (cadr (car parsed-scope)) env))
-               (pop_off_env (pop_env_to_global_scope env))
-               (new_env (list (cons (list varname var_value) original-local-scope)
-                            (pop_off_env)))
+               ;1.what is the local scope: ((global (a 1) (b 2) (c 5)))
+               ;1.1 there is only one global scope there, so local scope should be '()
+               ;1.2 there is a scope on top of global scope, that is the local scope
+               (local-scope (if (equal? (car (car env)) 'global)
+                            '()
+                            (car env)))
+               ;2. the global scope
+               (global-scope-env (pop_env_to_global_scope env))
+               ;3. udapte the local scope
+               (first-name-value-pair (car parsed-scope))
+               (new-local-scope (cons (list
+                                       (car first-name-value-pair)
+                                       (run-neo-parsed-code (cadr first-name-value-pair) env))
+                                      local-scope))
+               ;4. concat updated local scope on top of the global scope and local scope together to form the new env
+               (new_env (cons new-local-scope global-scope-env))
              )
           (cascade-update-env (cdr parsed-scope) new_env)
           )
