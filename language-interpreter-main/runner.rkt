@@ -105,6 +105,10 @@
        (run-let-exp parsed-code env))
       ;(print-exp (var-exp a)) -> output: **screen** 1
       ((equal? (car parsed-code) 'print-exp) (run-print-exp (cadr parsed-code) env))
+      ((equal? (car parsed-code) 'assign-exp) (run-assign-exp (elementAt parsed-code 1)
+                                                              (run-neo-parsed-code (elementAt parsed-code 2) env)
+                                                              env))
+      ((equal? (car parsed-code) 'block-exp) (run-block-exp (cdr parsed-code) env))
       (else (run-neo-parsed-code
              (cadr parsed-code) ;function expression
              (push_scope_to_env (cadr (cadr (cadr parsed-code)))
@@ -163,6 +167,46 @@
     )
   )
   )
+    
+
+;(assign-exp x (num-exp 8))
+;add (x 8) to the local var scope
+;it'd retrun a new environment, 
+(define run-assign-exp
+  (lambda (varname value env)
+    (cond
+      ((null? env) #false)
+      ((equal? (caar env) 'global)
+       (cons (list (list varname value)) env)) ;((varname value)) (global (a 1) ...))
+      (else (let*
+          ;(((X 8) (Y 9)) (global (a 1) (b 2) (c 5)) <- (z 10)
+          ;new-local-scope: ((z 10) (x 8) (y 9))
+          ((new-local-scope (cons (list varname value) (car env)))
+           (under-env (cdr env)))
+        (cons new-local-scope under-env))
+            )
+      )
+    )
+  )
+
+;(block (assign x 8) (print x) (assign y 10) (assign z 12) (print (math + y z)))
+(define run-block-exp
+  (lambda (parsed-list-exp env)
+    (cond
+      ((null? parsed-list-exp) '())
+      ((equal? (caar parsed-list-exp) 'assign-exp)
+       (run-block-exp
+        (cdr parsed-list-exp)
+        (run-assign-exp (cadr parsed-list-exp) (caddr parsed-list-exp) env)))
+      (else (cons (run-neo-parsed-code (car parsed-list-exp) env)
+                  run-block-exp (cdr parsed-list-exp) env)
+            )
+      )
+    )
+  )
+    
+      
+    
 
 (define run-print-exp
   (lambda (parsed-code env)
