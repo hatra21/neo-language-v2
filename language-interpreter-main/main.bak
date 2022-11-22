@@ -7,18 +7,12 @@
 ;;(define scope '((a 1) (b 2) (c 5)))
 (define env '((global (a 1) (b 2) (c 5))))
 
-;(define sample-code '(call (function () (ask (bool != a b) (math - a b) (math + a b))) (a)))
-;(display (neo-parser sample-code))
-;(define parsed-neo-code (neo-parser sample-code))
-;(run-neo-parsed-code parsed-neo-code env)
+;(define sample-code '(local-vars ((a 7) (b a) (x b)) (math + x a)))
+;(define sample-code '(print a))
+;(define sample-code '(assign x 8))
+(define sample-code '(block (assign x 8) (print a)))
 
-;(define parsed-neo-code (neo-parser '(call (function(x) (local-vars ((a 3) (b 7) (c 3)) (math + a b))) (5))))
-
-;(define parsed-neo-code (neo-parser '(call (function(x) (math + x a)) (5))))
-
-(define sample-code '(local-vars ((a 7) (b a) (x b)) (math + x a)))
 (displayln (neo-parser sample-code))
 (define parsed-neo-code (neo-parser sample-code))
-;(define parsed-code (neo-parser '(call (function (a) (call (function (r) a ) (a))) (5))))
 
-(run-neo-parsed-code parsed-neo-code env)
+;(run-neo-parsed-code parsed-neo-code env)

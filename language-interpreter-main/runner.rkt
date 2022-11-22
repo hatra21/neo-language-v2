@@ -47,6 +47,39 @@
       )
     )
 
+;plan to add x = 16 into local var scope ((x 8))
+;we should update the value of varname = x instead of aading a new (name-value pair)
+(define update-scope
+  (lambda (varname value scope)
+    (letrec (
+           (check-varname-in-pair (lambda (pair) (equal? (car pair) varname)))
+           (check-varname-in-scope
+            (lambda (curr_scope)
+              (cond
+                ((null? curr_scope) #false)
+                (else
+                 (if (check-varname-in-pair (car curr_scope)) #true
+                     (check-varname-in-scope (cdr curr_scope))
+                     )
+                 )
+                )
+              )
+            )
+           )
+    (cond
+      ((null? scope) (cons (list varname value) scope))
+      ((equal? varname (caar scope)) (cons (list varname value) (cdr scope)))
+      (else
+       (if (check-varname-in-scope scope)
+           (cons (car scope) (update-scope varname value (cdr scope)))
+           (cons (list varname value) scope)
+           )
+       )
+      )
+    )
+  )
+  )
+
 ;add name value pairs to the local scope
 (define extend_local_scope
   (lambda (env list-of-varname list-of-value)
@@ -109,6 +142,9 @@
                                                               (run-neo-parsed-code (elementAt parsed-code 2) env)
                                                               env))
       ((equal? (car parsed-code) 'block-exp) (run-block-exp (cdr parsed-code) env))
+      ;(while-exp (bool < i (num-exp 10)) (block-exp (assign i (math + i 1))))
+      ((equal? (car parsed-code) 'while-exp)
+       (run-while-exp (cadr parsed-code) (caddr parsed-code) env))
       (else (run-neo-parsed-code
              (cadr parsed-code) ;function expression
              (push_scope_to_env (cadr (cadr (cadr parsed-code)))
@@ -181,7 +217,7 @@
       (else (let*
           ;(((X 8) (Y 9)) (global (a 1) (b 2) (c 5)) <- (z 10)
           ;new-local-scope: ((z 10) (x 8) (y 9))
-          ((new-local-scope (cons (list varname value) (car env)))
+          ((new-local-scope (update-scope varname value (car env)))
            (under-env (cdr env)))
         (cons new-local-scope under-env))
             )
@@ -197,20 +233,38 @@
       ((equal? (caar parsed-list-exp) 'assign-exp)
        (run-block-exp
         (cdr parsed-list-exp)
-        (run-assign-exp (cadr parsed-list-exp) (caddr parsed-list-exp) env)))
-      (else (cons (run-neo-parsed-code (car parsed-list-exp) env)
-                  run-block-exp (cdr parsed-list-exp) env)
-            )
+        (run-assign-exp
+         (cadr (car parsed-list-exp))
+         (run-neo-parsed-code (elementAt (car parsed-list-exp) 2) env)
+         env)))
+      (else
+       (let ((return (run-neo-parsed-code (car parsed-list-exp) env)))
+         (if (void? return) (run-block-exp (cdr parsed-list-exp) env)
+             (cons return (run-block-exp (cdr parsed-list-exp) env)))
+         )
+       )
       )
     )
   )
     
-      
+
+;(while-exp (bool < i (num-exp 10)) (block-exp (assign i (math + i 1))))
+
+(define run-while-exp
+  (lambda (bool_exp block_exp env)
+    (let* ((new_block_exp (append block_exp (list (list 'while-exp bool_exp block_exp)))))
+        (if (run-neo-parsed-code bool_exp env)
+            (run-neo-parsed-code new_block_exp env)
+            '()
+            )
+     )
+    )
+  )
     
 
 (define run-print-exp
   (lambda (parsed-code env)
-    (display (string-append "**screen**" (number->string (run-neo-parsed-code parsed-code env))))
+    (displayln (string-append "**screen**" (number->string (run-neo-parsed-code parsed-code env))))
     )
   )
 
