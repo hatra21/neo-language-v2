@@ -25,6 +25,10 @@
       ((equal? (car neo-code) 'block) (cons 'block-exp (neo-parser (cdr neo-code))))
       ((equal? (car neo-code) 'while)
        (list 'while-exp (neo-parser (cadr neo-code)) (neo-parser (caddr neo-code))))
+      ((equal? (car neo-code) 'register)
+       (list 'register-obj (cadr neo-code) (neo-class-definition-parser (caddr neo-code))))
+      ((equal? (car neo-code) 'this)
+       (list 'this-scope-field (cadr neo-code)))
       (else (map neo-parser neo-code)) ;((neo-parser 1) (neo-parser 'a) (neo-parser (math + 1 2)))
       )
     )
@@ -82,4 +86,45 @@
     )
   )
 
+(define neo-class-definition-parser
+  (lambda (neo-code)
+    (list
+     'class
+     (cadr neo-code)
+     (caddr neo-code)
+     (neo-class-constructor-parser (elementAt neo-code 3))
+     (list 'methods (neo-class-methods-parser (cadr (elementAt neo-code 4))))
+     )
+    )
+  )
+
+
+
+(define neo-class-constructor-parser
+  (lambda (neo-code)
+    (list 'constructor (cadr neo-code) (neo-parser (caddr neo-code)))
+    )
+  )
+
+(define neo-class-methods-parser
+  (lambda (neo-code)
+    (cond
+      ((null? neo-code) '())
+      (else (cons (neo-class-methods-parser-helper (car neo-code)) (neo-class-methods-parser (cdr neo-code))))
+      )
+    )
+  )
+                                             
+
+
+(define neo-class-methods-parser-helper
+  (lambda (neo-code)
+    (let ((method-name (car neo-code))
+          (method-para (cadr neo-code))
+          (method-body (neo-parser (caddr neo-code)))
+          )
+      (list method-name method-para method-body)
+      )
+    )
+  )
 (provide (all-defined-out))
